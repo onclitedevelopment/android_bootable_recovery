@@ -29,6 +29,9 @@
 #include <dirent.h>
 #include <fcntl.h>
 #include <iostream>
+#include <fstream>
+#include <limits>
+#include <vector>
 #include <libgen.h>
 #include <zlib.h>
 #include <sstream>
@@ -1727,6 +1730,25 @@ bool TWPartition::Bind_Mount(bool Display_Error) {
 	return true;
 }
 
+void TWPartition::UnMount_Submounts(int flags) {
+	std::vector<std::string> submounts;
+	std::string prefix = Mount_Point + "/";
+	std::ifstream mounts("/proc/mounts");
+	std::string device, point;
+
+	while (mounts >> device >> point) {
+		mounts.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+		if (point.size() > prefix.size() && point.compare(0, prefix.size(), prefix) == 0)
+			submounts.push_back(point);
+	}
+
+	// Deepest first, so a nested mount never pins the one above it.
+	for (std::vector<std::string>::reverse_iterator it = submounts.rbegin(); it != submounts.rend(); ++it) {
+		LOGINFO("Unmounting '%s' nested under '%s'\n", it->c_str(), Mount_Point.c_str());
+		umount2(it->c_str(), flags);
+	}
+}
+
 bool TWPartition::UnMount(bool Display_Error, int flags) {
 	if (Is_Mounted()) {
 		int never_unmount_system;
@@ -1740,6 +1762,10 @@ bool TWPartition::UnMount(bool Display_Error, int flags) {
 
 		if (!Symlink_Mount_Point.empty())
 			umount2(Symlink_Mount_Point.c_str(), flags);
+
+		// vold bind mounts /data/data onto /data/user/0 when it unlocks FBE,
+		// and that nested mount keeps /data busy for good.
+		UnMount_Submounts(flags);
 
 		umount2(Mount_Point.c_str(), flags);
 		if (Is_Mounted()) {

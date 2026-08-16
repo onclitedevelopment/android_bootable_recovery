@@ -126,6 +126,7 @@ public:
 	bool Is_File_System_Writable();                                           // Checks if the root directory of the file system can be written to
 	bool Mount(bool Display_Error);                                           // Mounts the partition if it is not mounted
 	bool UnMount(bool Display_Error, int flags = 0);                          // Unmounts the partition if it is mounted
+	void UnMount_Submounts(int flags);                                        // Unmounts anything mounted underneath this partition
 	bool ReMount(bool Display_Error);                                         // Remounts the partition
 	bool ReMount_RW(bool Display_Error);                                      // Remounts the partition with read/write access
 	bool Bind_Mount(bool Display_Error);                                      // Bind mount partition if symlink mountpoint is populated
