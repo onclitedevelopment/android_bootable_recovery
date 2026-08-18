@@ -2660,27 +2660,33 @@ void TWPartitionManager::Get_Partition_List(string ListType, std::vector<Partiti
 		dalvik.Mount_Point = "DALVIK";
 		dalvik.selected = 0;
 		Partition_List->push_back(dalvik);
-		for (iter = Partitions.begin(); iter != Partitions.end(); iter++) {
-			if ((*iter)->Wipe_Available_in_GUI && !(*iter)->Is_SubPartition) {
-				struct PartitionList part;
-				part.Display_Name = (*iter)->Display_Name;
-				part.Mount_Point = (*iter)->Mount_Point;
-				part.selected = 0;
-				Partition_List->push_back(part);
-			}
-			if ((*iter)->Has_Android_Secure) {
-				struct PartitionList part;
-				part.Display_Name = (*iter)->Backup_Display_Name;
-				part.Mount_Point = (*iter)->Backup_Path;
-				part.selected = 0;
-				Partition_List->push_back(part);
-			}
-			if ((*iter)->Has_Data_Media) {
-				struct PartitionList datamedia;
-				datamedia.Display_Name = (*iter)->Storage_Name;
-				datamedia.Mount_Point = "INTERNAL";
-				datamedia.selected = 0;
-				Partition_List->push_back(datamedia);
+		// Removable storage last, so that a stray tap among the partitions a
+		// user actually came to wipe cannot take out an sd card or otg drive.
+		for (int pass = 0; pass < 2; pass++) {
+			for (iter = Partitions.begin(); iter != Partitions.end(); iter++) {
+				if ((*iter)->Removable != (pass == 1))
+					continue;
+				if ((*iter)->Wipe_Available_in_GUI && !(*iter)->Is_SubPartition) {
+					struct PartitionList part;
+					part.Display_Name = (*iter)->Display_Name;
+					part.Mount_Point = (*iter)->Mount_Point;
+					part.selected = 0;
+					Partition_List->push_back(part);
+				}
+				if ((*iter)->Has_Android_Secure) {
+					struct PartitionList part;
+					part.Display_Name = (*iter)->Backup_Display_Name;
+					part.Mount_Point = (*iter)->Backup_Path;
+					part.selected = 0;
+					Partition_List->push_back(part);
+				}
+				if ((*iter)->Has_Data_Media) {
+					struct PartitionList datamedia;
+					datamedia.Display_Name = (*iter)->Storage_Name;
+					datamedia.Mount_Point = "INTERNAL";
+					datamedia.selected = 0;
+					Partition_List->push_back(datamedia);
+				}
 			}
 		}
 	} else if (ListType == "flashimg") {
