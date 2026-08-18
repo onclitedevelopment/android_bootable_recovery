@@ -58,6 +58,10 @@ else
     LOCAL_CFLAGS += -DTW_EXCLUDE_APEX
 endif
 
+ifeq ($(TW_EXCLUDE_TWRPAPP), true)
+    LOCAL_CFLAGS += -DTW_EXCLUDE_TWRPAPP
+endif
+
 LOCAL_STATIC_LIBRARIES += libavb \
                           libhealthhalutils \
                           libhealthshim \
@@ -506,8 +510,6 @@ TWRP_REQUIRED_MODULES += \
     minadbd \
     twrpbu \
     adbd_system_api_recovery \
-    me.twrp.twrpapp.apk \
-    privapp-permissions-twrpapp.xml \
     adbd_system_api_recovery \
     libsync.recovery \
     libandroidicu.recovery \
@@ -520,6 +522,12 @@ TWRP_REQUIRED_MODULES += \
     android.hardware.health@2.0-service.rc \
     libadbd.recovery \
     libadbd_services.recovery
+
+ifneq ($(TW_EXCLUDE_TWRPAPP), true)
+TWRP_REQUIRED_MODULES += \
+    me.twrp.twrpapp.apk \
+    privapp-permissions-twrpapp.xml
+endif
 
 ifneq ($(TW_EXCLUDE_TZDATA), true)
 TWRP_REQUIRED_MODULES += \
