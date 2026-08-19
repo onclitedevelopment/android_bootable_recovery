@@ -61,6 +61,9 @@ endif
 ifeq ($(TW_EXCLUDE_TWRPAPP), true)
     LOCAL_CFLAGS += -DTW_EXCLUDE_TWRPAPP
 endif
+ifeq ($(TW_FORMAT_DATA_AS_DECLARED), true)
+    LOCAL_CFLAGS += -DTW_FORMAT_DATA_AS_DECLARED
+endif
 
 LOCAL_STATIC_LIBRARIES += libavb \
                           libhealthhalutils \

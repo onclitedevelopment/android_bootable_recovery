@@ -1897,6 +1897,14 @@ bool TWPartition::Wipe(string New_File_System) {
 }
 
 bool TWPartition::Wipe() {
+#ifdef TW_FORMAT_DATA_AS_DECLARED
+	// Advanced Wipe recreates whatever is already on the partition, which
+	// quietly undoes what Format Data does: the rom declares the filesystem it
+	// needs and cannot mount /data as anything else, so a clean flash done from
+	// this menu instead leaves it unbootable.
+	if (Mount_Point == "/data" && Is_File_System(Fstab_File_System))
+		return Wipe(Fstab_File_System);
+#endif
 	if (Is_File_System(Current_File_System))
 		return Wipe(Current_File_System);
 	else
