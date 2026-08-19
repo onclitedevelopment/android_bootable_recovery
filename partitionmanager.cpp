@@ -2125,6 +2125,19 @@ int TWPartitionManager::Decrypt_Device(string Password, int user_id) {
 		if (!Mount_By_Path("/data", true)) // /data has to be mounted for FBE
 			return -1;
 
+		// Whatever we just mounted has no fscrypt keys in it.  installKey() adds
+		// them with FS_IOC_ADD_ENCRYPTION_KEY against the mount point, so they
+		// live in the filesystem's own keyring and die with the superblock -- and
+		// /data really is unmounted before we get here, by Setup_Data_Media(),
+		// which mounts it to look for /data/media/0 and unmounts it again.  Only
+		// Setup_Data_Partition() ever installed the keys, and nothing puts them
+		// back, so every read under /data/system and /data/system_de fails with
+		// ENOENT afterwards and decrypt reads it as missing files rather than as
+		// a filesystem it holds no key for.  Reinstalling is cheap, and does
+		// nothing when the keys are already present.
+		if (!android::keystore::Decrypt_DE())
+			LOGINFO("Failed to reinstall DE keys after mounting /data; decrypt will likely fail\n");
+
 		bool user_need_decrypt = false;
 		std::vector<users_struct>::iterator iter;
 		for (iter = Users_List.begin(); iter != Users_List.end(); iter++) {
