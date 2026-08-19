@@ -254,6 +254,7 @@ TWPartition::TWPartition() {
 	Is_Encrypted = false;
 	Is_Decrypted = false;
 	Is_FBE = false;
+	Has_File_Encryption = false;
 	Mount_To_Decrypt = false;
 	Decrypted_Block_Device = "";
 	Display_Name = "";
@@ -957,6 +958,7 @@ void TWPartition::Apply_TW_Flag(const unsigned flag, const char* str, const bool
 			// This flag isn't used by TWRP but is needed in 9.0 FBE decrypt
 			// fileencryption=ice:aes-256-heh
 			{
+				Has_File_Encryption = true;
 				std::string FBE = str;
 				size_t colon_loc = FBE.find(":");
 				if (colon_loc == std::string::npos) {
@@ -2325,7 +2327,15 @@ bool TWPartition::Wipe_EXTFS(string File_System) {
 	gui_msg(Msg("formatting_using=Formatting {1} using {2}...")(Display_Name)("mke2fs"));
 
 	// Execute mke2fs to create empty ext4 filesystem
-	Command = "mke2fs -t " + File_System + " -b 4096 " + Actual_Block_Device + " " + size_str;
+	Command = "mke2fs -t " + File_System + " -b 4096 ";
+	// mke2fs never sets the encrypt feature on its own, and the kernel answers
+	// FS_IOC_SET_ENCRYPTION_POLICY with EOPNOTSUPP while it is missing, so a
+	// partition we formatted takes the rom down with set_policy_failed and
+	// fails our own fbe setup the same way. make_f2fs -g android already
+	// covers f2fs.
+	if (Has_File_Encryption && File_System == "ext4")
+		Command += "-O encrypt ";
+	Command += Actual_Block_Device + " " + size_str;
 	LOGINFO("mke2fs command: %s\n", Command.c_str());
 	ret = TWFunc::Exec_Cmd(Command);
 	if (ret) {
